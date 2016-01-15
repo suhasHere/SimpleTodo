@@ -9,13 +9,13 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.crypt.todo.simpletodo.EditItemActivity"
+    tools:context=".activities.EditItemActivity"
     tools:showIn="@layout/activity_edit_item">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Edit Item Below:"
+        android:text="@string/tv_edit_item"
         android:id="@+id/tvEditItem"
         android:cursorVisible="true"
         android:layout_alignParentTop="true"

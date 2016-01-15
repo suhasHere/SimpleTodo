@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.crypt.todo.simpletodo.TodoActivity">
+    tools:context=".activities.TodoActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
