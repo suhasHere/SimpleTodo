@@ -13,6 +13,7 @@
     tools:showIn="@layout/activity_todo">
 
 
+    <!-- Trying out Floating Action button
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -22,13 +23,17 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true" />
 
+    -->
+
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="@string/et_add_item"
         android:id="@+id/etNewItem"
-        android:layout_alignBottom="@+id/btnAddItem"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:hint="@string/et_add_item"
+        />
 
     <ListView
         android:layout_width="wrap_content"
@@ -36,6 +41,7 @@
         android:id="@+id/lvItems"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:layout_above="@+id/btnAddItem"
-        android:layout_alignParentEnd="true" />
+        android:layout_above="@+id/etNewItem"
+        />
+
 </RelativeLayout>

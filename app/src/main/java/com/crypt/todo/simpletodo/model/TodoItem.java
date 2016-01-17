@@ -9,42 +9,80 @@ import android.os.Parcelable;
  * represents the Parcelable object for Intents
  */
 public class TodoItem implements Parcelable {
-    private String id; //could be a url
-    private String todoText;
+    private String mId; //could be a url
+    private String mTodoText;
+    private String mDate;
+    private String mTime;
+    private String mStatus = "good"; // start as not expired, happy status
 
     public TodoItem(String itemText) {
         setText(itemText);
+        setDate("");
+        setTime("");
     }
 
-    public TodoItem(String id, String itemText) {
+
+    public TodoItem(String id, String itemText, String date, String time, String status) {
         setId(id);
         setText(itemText);
+        setDate(date);
+        setTime(time);
+        setStatus(status);
     }
 
     protected TodoItem(Parcel in) {
-        id = in.readString();
-        todoText = in.readString();
+        mId = in.readString();
+        mTodoText = in.readString();
+        mDate = in.readString();
+        mTime = in.readString();
+        mStatus = in.readString();
     }
 
 
     public void setId(String id) {
-        this.id = id;
+        this.mId = id;
     }
 
     public void setText(String text) {
-        this.todoText = text;
+        this.mTodoText = text;
     }
 
     public String getId() {
-        return id;
+        return mId;
     }
 
     public String getText() {
-        return todoText;
+        return mTodoText;
     }
 
+    public String getDate() {
+        return mDate;
+    }
+
+    public void setDate(String date) {
+        this.mDate = date;
+    }
+
+    public String getTime() {
+        return mTime;
+    }
+
+    public void setTime(String time) {
+        this.mTime = time;
+    }
+
+    public String getStatus() {
+        return mStatus;
+    }
+
+    public void setStatus(String status) {
+        this.mStatus = status;
+    }
+
+
     public String toString() {
-        return this.getText();
+        String result = this.getText() + "\n" + this.getDate() +"\t ...." + this.getTime();
+        return result;
     }
 
 
@@ -57,6 +95,9 @@ public class TodoItem implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(getId());
         dest.writeString(getText());
+        dest.writeString(getDate());
+        dest.writeString(getTime());
+        dest.writeString(getStatus());
     }
 
     public static final Creator<TodoItem> CREATOR = new Creator<TodoItem>() {
@@ -70,4 +111,5 @@ public class TodoItem implements Parcelable {
             return new TodoItem[size];
         }
     };
+
 }

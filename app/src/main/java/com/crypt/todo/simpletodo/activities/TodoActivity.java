@@ -1,31 +1,50 @@
 package com.crypt.todo.simpletodo.activities;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.crypt.todo.simpletodo.R;
+import com.crypt.todo.simpletodo.adapters.TodoListAdapter;
 import com.crypt.todo.simpletodo.db.TodoDatabase;
 import com.crypt.todo.simpletodo.model.TodoItem;
+import com.crypt.todo.simpletodo.services.TodoExpirationIntent;
+import com.crypt.todo.simpletodo.services.TodoExpiryBroadcastReceiver;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TodoActivity extends AppCompatActivity {
 
     List<TodoItem> todoItems;
-    ArrayAdapter<TodoItem> itemsAdapter;
+    TodoListAdapter adapter;
     ListView lvItems;
     TodoDatabase todoDatabase;
+
+    public static final Map<String, Integer> STATUS_EMOTICON_MAP = new HashMap<String, Integer>() {
+        {
+            put("angry", R.drawable.ic_angry);
+            put("sad", R.drawable.ic_sad);
+            put("good", R.drawable.ic_happy);
+        }
+    };
+
 
     private final int REQUEST_CODE = 200; // for intent operations
 
@@ -33,21 +52,35 @@ public class TodoActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_todo);
-        lvItems = (ListView ) findViewById(R.id.lvItems);
 
+        // setup the floating action bar to add new items
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_add);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onAddItem(view);
+            }
+        });
+
+
+        // setup the list view and its adapter and the database
+        lvItems = (ListView ) findViewById(R.id.lvItems);
         // init the sqldb and read the entries
         todoDatabase = new TodoDatabase(this);
-        readItems();
-
+        todoItems = todoDatabase.getAllRecords();
         // attach the adapter to the view
-        itemsAdapter = new ArrayAdapter<>(this, R.layout.simple_list_item_1, todoItems);
-        lvItems.setAdapter(itemsAdapter);
+        //itemsAdapter = new ArrayAdapter<>(this, R.layout.todo_list_adapter_layout, R.id.itemname, todoItems);
+        adapter = new TodoListAdapter(this, todoItems, STATUS_EMOTICON_MAP);
+        lvItems.setAdapter(adapter);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // listener setup for small and long click/tap
         setupListViewListener();
+
+        // 60 seconds alarm to trigger expiry checks on the todo items
+        scheduleAlarm();
     }
 
     @Override
@@ -91,7 +124,7 @@ public class TodoActivity extends AppCompatActivity {
         EditText etNewItem = (EditText) findViewById(R.id.etNewItem);
         String itemText = etNewItem.getText().toString();
         if(itemText.isEmpty()) {
-            Toast.makeText(this, "Empty TODO ... Ummm !!!", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "Empty TODO. Please Retry!!!", Toast.LENGTH_SHORT);
             return;
         }
 
@@ -104,12 +137,17 @@ public class TodoActivity extends AppCompatActivity {
         }
 
         todoItem.setId(String.valueOf(id));
-        itemsAdapter.add(todoItem);
+        todoItems.add(todoItem);
+        adapter.notifyDataSetChanged();
+
         // update the database with the row_id created for the new item added
         todoDatabase.updateRecord(todoItem, id);
         etNewItem.setText("");
+
     }
 
+
+    // Listeners for single tap and double tap
     private void setupListViewListener() {
 
         // on tapping the item, launch Edit Item Activity
@@ -132,7 +170,7 @@ public class TodoActivity extends AppCompatActivity {
                     @Override
                     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                         TodoItem item = todoItems.remove(position);
-                        itemsAdapter.notifyDataSetChanged();
+                        adapter.notifyDataSetChanged();
                         todoDatabase.deleteRecord(item);
                         return true;
                     }
@@ -143,38 +181,88 @@ public class TodoActivity extends AppCompatActivity {
 
     // Utility to update the adapter/view and the database
     private  void updateItem(TodoItem item, int position) {
+        TodoItem original = todoItems.get(position);
+
+
+        if(item.getDate() == null && original.getDate() != null) {
+            item.setDate(original.getDate());
+        }
+
+
+        if(item.getTime() == null && original.getTime() != null) {
+            item.setTime(original.getTime());
+        }
+
+        item.setStatus("good");
+
         todoItems.set(position, item);
-        itemsAdapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
         todoDatabase.updateRecord(item, Integer.valueOf(item.getId()));
     }
 
 
-    /*
-        Lower level utils .. should be in a separate package i think !!
-     */
 
-    private void readItems() {
 
-        todoItems = todoDatabase.getAllRecords();
+    // Setup a recurring alarm to invoke the ItemExpiryMonitoring IntentService
+    public void scheduleAlarm() {
+        // Construct an intent that will execute the AlarmReceiver
+        Intent intent = new Intent(getApplicationContext(), TodoExpiryBroadcastReceiver.class);
 
-        String resultStr = "";
-        for(TodoItem item: todoItems) {
-            resultStr += item.getText() + " ";
-        }
+        // Create a PendingIntent to be triggered when the alarm goes off
+        PendingIntent pIntent = PendingIntent.getBroadcast(this, TodoExpiryBroadcastReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        long firstMillis = System.currentTimeMillis(); // alarm is set right away
+        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, 1000 * 10, pIntent);
     }
 
-
-    // Bulk write operation. Not used yet.
-    private void writeItems() {
-        String resultStr = "";
-        for(TodoItem item: todoItems) {
-            resultStr += item + " ";
-        }
-
-        Log.d("APP_DEBUG", "WriteItems " + resultStr);
-
-        // perform a bulk update
-        todoDatabase.updateAll(todoItems);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Register for the particular broadcast based on ACTION string
+        IntentFilter filter = new IntentFilter(TodoExpirationIntent.ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(expiryIntentReceiver, filter);
+        // or `registerReceiver(testReceiver, filter)` for a normal broadcast
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Unregister the listener when the application is paused
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(expiryIntentReceiver);
+        // or `unregisterReceiver(testReceiver)` for a normal broadcast
+    }
+
+    // Define the callback for what to do when data is received from the ExpiryService
+    // after monitoring
+    private BroadcastReceiver expiryIntentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int resultCode = intent.getIntExtra("resultCode", RESULT_CANCELED);
+            if (resultCode == RESULT_OK) {
+                boolean hasChanges = intent.getBooleanExtra("hasChanges", false);
+                if(hasChanges) {
+                    List<TodoItem> responses = intent.getParcelableArrayListExtra("responses");
+                    for(TodoItem item: responses) {
+                        int position = findPosition(item);
+                        todoItems.set(position, item);
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        }
+    };
+
+
+    private int findPosition(TodoItem item) {
+        for(int i=0; i < todoItems.size(); i++) {
+            if(todoItems.get(i) != null
+                    && todoItems.get(i).getId().equalsIgnoreCase(item.getId()))
+            {
+                return i;
+            }
+        }
+        return  -1;
+    }
 }

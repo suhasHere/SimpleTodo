@@ -9,8 +9,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
-import com.crypt.todo.simpletodo.model.TodoItem;
 import com.crypt.todo.simpletodo.model.TodoDbContract;
+import com.crypt.todo.simpletodo.model.TodoItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ public class TodoDatabase extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
 
-    private static final String DATABASE_NAME = "TodoItems.db";
+    private static final String DATABASE_NAME = "TodoDb.db";
 
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
@@ -33,8 +33,11 @@ public class TodoDatabase extends SQLiteOpenHelper {
             "CREATE TABLE " + TodoDbContract.TodoEntry.TABLE_NAME + " (" +
                     TodoDbContract.TodoEntry._ID + " INTEGER PRIMARY KEY," +
                     TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID + TEXT_TYPE + COMMA_SEP +
-                    TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM + TEXT_TYPE +
-            " )";
+                    TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM + TEXT_TYPE + COMMA_SEP +
+                    TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE + TEXT_TYPE + COMMA_SEP +
+                    TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME + TEXT_TYPE + COMMA_SEP +
+                    TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS + TEXT_TYPE +
+                    " )";
 
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TodoDbContract.TodoEntry.TABLE_NAME;
@@ -46,6 +49,7 @@ public class TodoDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        Log.d("DB_DBG", SQL_CREATE_ENTRIES);
         db.execSQL(SQL_CREATE_ENTRIES);
     }
 
@@ -72,7 +76,10 @@ public class TodoDatabase extends SQLiteOpenHelper {
         String[] projection = {
                 TodoDbContract.TodoEntry._ID,
                 TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID,
-                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM,
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE,
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME,
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS
         };
 
         Cursor c = db.query(
@@ -93,11 +100,14 @@ public class TodoDatabase extends SQLiteOpenHelper {
 
             TodoItem item = new TodoItem(
                     c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID)),
-                    c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM))
+                    c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM)),
+                    c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE)),
+                    c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME)),
+                    c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS))
             );
 
 
-            Log.d("DB_DEBUG", " DB returned " + item.getText());
+            Log.d("DB_DEBUG", " DB returned " + item);
             c.close();
             return  item;
         }
@@ -115,6 +125,9 @@ public class TodoDatabase extends SQLiteOpenHelper {
             values.put(TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID, item.getId());
         }
         values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM, item.getText());
+        values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE, item.getDate());
+        values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME, item.getTime());
+        values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS, item.getStatus());
 
         long newRowId;
         newRowId = db.insert(
@@ -135,11 +148,15 @@ public class TodoDatabase extends SQLiteOpenHelper {
     }
 
     public int updateRecord(TodoItem item, long rowId) {
+        Log.d("DB_DBG", "UpdateRecord: Item: "+ item);
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
         values.put(TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID, item.getId());
         values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM, item.getText());
+        values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE, item.getDate());
+        values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME, item.getTime());
+        values.put(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS, item.getStatus());
 
 
         String selection = TodoDbContract.TodoEntry._ID  + " LIKE ?";
@@ -153,7 +170,6 @@ public class TodoDatabase extends SQLiteOpenHelper {
         );
 
         return count;
-
     }
 
 
@@ -172,18 +188,19 @@ public class TodoDatabase extends SQLiteOpenHelper {
 
     /**
      * Bulk DB operations
-     *
      */
 
     public List<TodoItem> getAllRecords() {
-
         List<TodoItem> items = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] projection = {
                 TodoDbContract.TodoEntry._ID,
                 TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID,
-                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM,
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE,
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME,
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS
         };
 
         Cursor c = db.query(
@@ -201,8 +218,11 @@ public class TodoDatabase extends SQLiteOpenHelper {
             while (c.isAfterLast() == false) {
                 items.add(new TodoItem(
                         c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID)),
-                        c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM))
-                ));
+                        c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM)),
+                        c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE)),
+                        c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME)),
+                        c.getString(c.getColumnIndexOrThrow(TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS))
+                        ));
                 c.moveToNext();
             }
         }
@@ -218,8 +238,11 @@ public class TodoDatabase extends SQLiteOpenHelper {
 
         String sql = "INSERT or REPLACE INTO " + TodoDbContract.TodoEntry.TABLE_NAME + " (" +
                 TodoDbContract.TodoEntry.COLUMN_NAME_ENTRY_ID + COMMA_SEP +
-                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM +
-                " ) VALUES (?,?)" ;
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_ITEM + COMMA_SEP +
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_DATE + COMMA_SEP +
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_TIME + COMMA_SEP +
+                TodoDbContract.TodoEntry.COLUMN_NAME_TODO_STATUS +
+                " ) VALUES (?,?,?,?,?)" ;
 
         Log.d("DB_DEBUG","Bulk update Statement " + sql);
 
@@ -229,8 +252,12 @@ public class TodoDatabase extends SQLiteOpenHelper {
         for(TodoItem item: items) {
             statement.bindString(1, item.getId());
             statement.bindString(2, item.getText());
+            statement.bindString(3, item.getDate());
+            statement.bindString(4, item.getTime());
+            statement.bindString(5, item.getStatus());
             statement.execute();
         }
+
         db.setTransactionSuccessful();
         db.endTransaction();
 

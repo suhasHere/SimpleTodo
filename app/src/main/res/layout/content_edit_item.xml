@@ -15,7 +15,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/tv_edit_item"
         android:id="@+id/tvEditItem"
         android:cursorVisible="true"
         android:layout_alignParentTop="true"
@@ -30,17 +29,67 @@
         android:id="@+id/etEditItem"
         android:layout_below="@+id/tvEditItem"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="41dp" />
+        android:layout_alignParentStart="true" />
 
+    <RadioButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/radio_date"
+        android:id="@+id/radioButtonDate"
+        android:checked="false"
+        android:layout_below="@+id/etEditItem"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="35dp"
+        android:clickable="true"
+        android:onClick="onRadioDate" />
+
+    <RadioButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/radio_time"
+        android:id="@+id/radioButtonTime"
+        android:checked="false"
+        android:layout_alignTop="@+id/radioButtonDate"
+        android:layout_toRightOf="@+id/etEditItem"
+        android:layout_toEndOf="@+id/etEditItem"
+        android:clickable="true"
+        android:onClick="onRadioTime" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/tvDate"
+        android:layout_below="@+id/radioButtonDate"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="54dp"
+        android:hint="Choose Date"
+        android:layout_alignRight="@+id/tvTime"
+        android:layout_alignEnd="@+id/tvTime" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/tvTime"
+        android:hint="Choose Time"
+        android:layout_alignTop="@+id/tvDate"
+        android:layout_toRightOf="@+id/etEditItem"
+        android:layout_toEndOf="@+id/etEditItem" />
+
+
+    <!-- Testing floating action button now
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save"
         android:onClick="onSaveItem"
         android:id="@+id/btnEditSave"
-        android:layout_below="@+id/etEditItem"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="56dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    -->
 </RelativeLayout>
