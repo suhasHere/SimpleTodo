@@ -10,7 +10,7 @@ is very rudimentary in nature considering a novice android developer
 with 3 days experience.
 
 This project was developed for purely learning purposes and 
-has no commercial value whatosever. The implementati
+has no commercial value whatosever. 
 
 If you decide to install and use it for real, please
 do play with the TodoItem expiry alarm settings for more
